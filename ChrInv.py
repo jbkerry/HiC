@@ -11,7 +11,7 @@ import scipy.stats as stats
 import matplotlib.mlab as mlab
 
 def usage():
-    print("usage: Proximity_SD.py -m <mode (distance or read)> -l <lower bound> -u <upper bound>")
+    print("usage: Proximity_SD.py -m <mode (individual or grouped)> -l <lower bound> -u <upper bound>")
 
 mode = ""
 lowPass = 0
@@ -43,9 +43,9 @@ else:
 
 ## Import chr1 matrix to datafram (Rao et al. K562)
 
-df = pd.read_table("chr1MatrixFull_GM12878.csv",sep="\t",index_col=0)
+df = pd.read_table("chr1MatrixFull.csv",sep="\t",index_col=0)
 
-def ByDistance(lower,upper):
+def Individual(lower,upper):
 
     ## Set up dataframe for storing graphical numbers
     
@@ -77,12 +77,15 @@ def ByDistance(lower,upper):
     ## Define graph/axis parameters
     
     fig, ax = plt.subplots()
-    xticks = np.arange(-5,6,1)
+    #xticks = np.arange(-5,6,1)
+    xticks = np.arange(0,21,2)
     addString = "MB"
-    xticknames = [str(xitem)+addString for xitem in xticks]
-    ax.set_xlim(-5, 5)
+    #xticknames = [str(xitem)+addString for xitem in xticks]
+    #ax.set_xlim(-5, 5)
     ax.set_ylim(0, graph_df.values.max())
     ax.set_xticks(xticks, minor=False)
+    xarray = np.arange(-5,6,1)
+    xticknames = [str(xitem)+addString for xitem in xarray]
     ax.set_xticklabels(xticknames)
     
     ## Plot graph
@@ -90,11 +93,12 @@ def ByDistance(lower,upper):
     colours = ['b','r','g','y']
     ColCounter = 0
     for i in graph_df:
-        plt.plot(graph_df[i], colours[ColCounter], lw=2)
+        plt.plot(graph_df[i], colours[ColCounter], lw=2, label="Bin"+i)
         ColCounter = 0 if ColCounter==3 else ColCounter+1
+    #plt.legend()
     plt.show()
     
-def byRead():
+def Grouped():
     y_list = []
     error_list = []
     cnames = np.arange(-15,15.5,0.5)
@@ -127,7 +131,6 @@ def byRead():
     rev_list = [1-i for i in y_list]
     add_list = [x+y for x,y in zip(rev_list,error_list)]
     min_list = [x-y for x,y in zip(rev_list,error_list)]
-    
     fig, ax = plt.subplots()
     #ax.set_xlim(graph_df.columns.values.min(), graph_df.columns.values.max())
     #ax.set_xlim(-2, 2)
@@ -142,10 +145,13 @@ def byRead():
     ax.set_ylabel("Fraction of reads at viewpoint")
     plt.show()
     
-if mode=="distance":    
-    ByDistance(int(lowPass),int(upPass))
-elif mode=="read":
-    byRead()
+if mode=="individual":    
+    Individual(int(lowPass),int(upPass))
+elif mode=="grouped":
+    Grouped()
+else:
+    print("Error: mode option not recognised, please choose between 'individual' or 'grouped'")
+    sys.exit(2)
 
 #fig, ax = plt.subplots()
 #
