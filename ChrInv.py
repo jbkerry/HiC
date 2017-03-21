@@ -11,7 +11,7 @@ import scipy.stats as stats
 import matplotlib.mlab as mlab
 
 def usage():
-    print("usage: Proximity_SD.py -m <mode (individual or grouped)> -l <lower bound> -u <upper bound>")
+    print("usage: ChrInv.py -m <mode (individual or grouped)> -l <lower bound> -u <upper bound>")
 
 mode = ""
 lowPass = 0
@@ -43,7 +43,7 @@ else:
 
 ## Import chr1 matrix to datafram (Rao et al. K562)
 
-df = pd.read_table("chr1MatrixFull.csv",sep="\t",index_col=0)
+df = pd.read_table("chr1MatrixFull_GM12878.csv",sep="\t",index_col=0)
 
 def Individual(lower,upper):
 
