@@ -77,8 +77,8 @@ def Individual(lower,upper):
     ## Define graph/axis parameters
     
     fig, ax = plt.subplots()
-    #xticks = np.arange(-5,6,1)
-    xticks = np.arange(0,21,2)
+    xticks = np.arange(-5,6,1)
+    #xticks = np.arange(0,21,2)
     addString = "MB"
     #xticknames = [str(xitem)+addString for xitem in xticks]
     #ax.set_xlim(-5, 5)
