@@ -84,7 +84,7 @@ def ligate(df, starts, stops):
     Returns
     -------
     final_frags: a list containing sonicated, pulled-down and size-selected
-        fragments (all fragments will be in the range 250-400bp and contain
+        fragments (all fragments will be in the range 240-400bp and contain
         one restricion site)
     
     '''
@@ -114,5 +114,22 @@ def ligate(df, starts, stops):
                 if len(i)>=240: final_frags.append(i)
 
     return final_frags
+
+def sequence(seqs):
+    '''Paired end sequences a list of supplied fragments. Outputs forward and
+    reverse FASTA files
+    
+    Parameters
+    ----------
+    seqs: a list of fragment sequences to sequence
+    
+    Returns:
+    --------
+    for_seqs:
+    rev_seqs:
+    
+    '''
+    
+    pass
     
     
