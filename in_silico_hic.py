@@ -4,6 +4,7 @@ import re
 import numpy as np
 import pandas as pd
 from Bio import SeqIO
+import math
 
 rs_dict = {'DpnII': 'GATC',
            'NlaIII': 'CATG',
@@ -70,10 +71,28 @@ def digest_genome(fa, chromosome, enzyme='DpnII', window=10, step=5):
 def ligate(df, starts, stops):
     '''Performs self-ligations of fragments within the same window based on
     coordinates supplied from start_boundaries and stop_boundaries lists
+    
+    Parameters
+    ----------
+    df: pandas data-frame containing coordinates and sequences of all digested
+        fragments (returned from digest_genome)
+    starts: a list containing all start coordinates of the windows
+        within which to perform ligations (returned from digest_genome)
+    stops: a list containing all stop coordinates of the windows
+        within which to perform ligations (returned from digest_genome)
+        
+    Returns
+    -------
+    final_frags: a list containing sonicated, pulled-down and size-selected
+        fragments (all fragments will be in the range 250-400bp and contain
+        one restricion site)
+    
     '''
+    
     #p = re.compile(rs_dict[enzyme])
     p = re.compile('GATC')
     fa_seqs = {}
+    final_frags = []
     for x, y in zip(starts, stops):
         seqs = df[(df['start']>=x) & (df['stop']<=y)]['seq']
         lig_frags = []
@@ -83,12 +102,17 @@ def ligate(df, starts, stops):
                 lig_frags.append(j + k)
                 lig_frags.append(k + j)
         for frag in lig_frags:
-            if len(frag)>=200:
-                junction = [m.start() for m in p.finditer(frag)][1]
-                read_start = junction-100 if junction-100>=0 else 0
-                read_stop = junction+100 if junction<=len(frag) else len(frag)
-                key = '{}-{}'.format(read_start, read_stop)
-                fa_seqs[key] = frag[read_start:read_stop]
-    return fa_seqs
+            # remove leading restriction site
+            frag = frag[len('GATC'):]
+            # sonicate
+            sonic_frags = [frag[i:i+400] for i in range(0, len(frag), 400)]
+            #pulldown
+            junc_frags = [i for i in sonic_frags if bool(
+                                                re.search('GATC', i))==True] 
+            #size-select    
+            for i in junc_frags:
+                if len(i)>=240: final_frags.append(i)
+
+    return final_frags
     
     
