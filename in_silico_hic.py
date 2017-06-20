@@ -4,7 +4,9 @@ import re
 import numpy as np
 import pandas as pd
 from Bio import SeqIO
+from Bio.Seq import Seq
 import math
+import subprocess
 
 rs_dict = {'DpnII': 'GATC',
            'NlaIII': 'CATG',
@@ -39,10 +41,12 @@ def digest_genome(fa, chromosome, enzyme='DpnII', window=10, step=5):
     seq_dict = SeqIO.to_dict(SeqIO.parse(fa, 'fasta'))
     seq = seq_dict[chr_name].seq.upper()
     
-    start = 0; stop = len(seq)
+    #start = 0; stop = len(seq)
     p = re.compile(rs_dict[enzyme])
-    pos_list = [m.start() for m in p.finditer(str(seq[start:stop]))]
+    pos_list = [m.start() for m in p.finditer(str(seq))]
+    bin_list = pos_list[::10]
     pos_list = np.array(pos_list)
+    
     
     win_size = 1000*window
     step_size = 1000*step
@@ -66,10 +70,10 @@ def digest_genome(fa, chromosome, enzyme='DpnII', window=10, step=5):
     frag_df = pd.DataFrame(fragments, columns = ['chr', 'start',
                                                  'stop', 'seq'])
     
-    return frag_df, start_boundaries, stop_boundaries
+    return frag_df, start_boundaries, stop_boundaries, bin_list
 
 def ligate(df, starts, stops):
-    '''Performs self-ligations of fragments within the same window based on
+    '''Performs ligations of fragments within the same window based on
     coordinates supplied from start_boundaries and stop_boundaries lists
     
     Parameters
@@ -129,7 +133,40 @@ def sequence(seqs):
     rev_seqs:
     
     '''
+    for_fasta = open('seqs_1.fa', 'w')
+    rev_fasta = open('seqs_2.fa', 'w')
+    for i, seq in enumerate(seqs):
+        seq_name = 'seq.'+str(i)
+        for_seq = seq[0:120]
+        rev_seq = Seq(seq[-120:]).reverse_complement()
+        for_fasta.write('>{}\n{}\n'.format(seq_name, for_seq))
+        rev_fasta.write('>{}\n{}\n'.format(seq_name, rev_seq))
     
-    pass
+    return
+
+def fill_matrix(bins):
+    bound_coor = ['{}-{}'.format(pos, bins[i+1]) for i, pos in enumerate(bins[:-1])]
+    hic_matrix = pd.DataFrame(columns=bound_coor[:500], index=bound_coor[:500])
+    
+    file1 = '/t1-data1/WTSA_Dev/jkerry/HiC/HiCUP/jon_scripts/Dev/seqs_1.sorted.bam'
+    file2 = '/t1-data1/WTSA_Dev/jkerry/HiC/HiCUP/jon_scripts/Dev/seqs_2.sorted.bam'
+    
+    for i, coor in enumerate(hic_matrix.index.values):
+        coor1 = 'chr22:'+coor
+        in_first = subprocess.Popen('samtools view {} {} | cut -f 1'.format(file1, coor1),
+                                        shell=True,
+                                        stdout=subprocess.PIPE).communicate()[0]
+        first_list = in_first.decode('utf-8').split('\n')[:-1]
+        for j in hic_matrix.columns[i:]:
+            coor2 = 'chr22:'+j
+            in_second = subprocess.Popen('samtools view {} {} | cut -f 1'.format(file2, coor2),
+                                        shell=True,
+                                        stdout=subprocess.PIPE).communicate()[0]
+            second_list = in_second.decode('utf-8').split('\n')[:-1]
+            
+            hic_matrix.loc[coor, j] = len([i for i in first_list if i in second_list])
+            
+    return hic_matrix
+    
     
     
